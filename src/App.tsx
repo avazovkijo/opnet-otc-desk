@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useWalletConnect } from '@btc-vision/walletconnect';
 import {
   ArrowRightLeft,
+  Clock3,
   Copy,
   ExternalLink,
   Filter,
   Gauge,
   ReceiptText,
   Search,
+  ShieldCheck,
+  Users,
   Wallet,
 } from 'lucide-react';
 
@@ -33,6 +36,30 @@ const QUOTES: QuoteRow[] = [
   { id: 107, pair: 'MOTO/tBTC', side: 'buy', size: 26, spread: 41, settlement: 'expired' },
   { id: 108, pair: 'PIL/tBTC', side: 'buy', size: 150_000, spread: 15, settlement: 'firm' },
 ];
+
+const COUNTERPARTIES = [
+  { name: 'North Relay', focus: 'PIL block flow', score: 'A', fill: '92% firm' },
+  { name: 'Moto Syndicate', focus: 'MOTO inventory', score: 'A-', fill: '86% firm' },
+  { name: 'Signet Crossing', focus: 'Cross-pair quotes', score: 'B+', fill: '79% firm' },
+] as const;
+
+const DOCTRINE = [
+  {
+    title: 'Stage before you route',
+    body: 'Every execution lane starts with an explicit contract source so the desk never pretends demo data is live settlement.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Compare before you cross',
+    body: 'Shortlist the best lanes side by side and only then accept or counter the quote. This keeps the terminal operational, not decorative.',
+    icon: ArrowRightLeft,
+  },
+  {
+    title: 'Read latency like risk',
+    body: 'Spread is not the only variable. Settlement speed and firm-fill ratio are first-class operator signals.',
+    icon: Clock3,
+  },
+] as const;
 
 function isLikelyContract(value: string): boolean {
   return /^opt1[a-z0-9]{10,}$/.test(value) || /^tb1[a-z0-9]{10,}$/i.test(value);
@@ -130,6 +157,12 @@ export default function App() {
   }, [search, sideFilter]);
 
   const compareRows = rows.slice(0, 3);
+  const deskTape = useMemo(() => ([
+    { label: 'Runtime', value: runtime },
+    { label: 'Visible tickets', value: String(rows.length) },
+    { label: 'Search lane', value: search.trim() || 'wide open' },
+    { label: 'Side filter', value: sideFilter },
+  ]), [runtime, rows.length, search, sideFilter]);
 
   function applyContract() {
     const next = contractInput.trim();
@@ -287,6 +320,75 @@ export default function App() {
             )}
           </div>
         </section>
+
+        <section className="desk-card tape-card" aria-label="Desk tape">
+          <header>
+            <p>Market tape</p>
+            <h2>Terminal context</h2>
+          </header>
+          <div className="tape-grid">
+            {deskTape.map((item) => (
+              <article key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="terminal-depth">
+          <article className="desk-card counterparty-card">
+            <header>
+              <p>Counterparty map</p>
+              <h2>Who is actually filling size</h2>
+            </header>
+            <div className="counterparty-stack">
+              {COUNTERPARTIES.map((party) => (
+                <article key={party.name}>
+                  <div className="counterparty-main">
+                    <Users size={15} />
+                    <div>
+                      <strong>{party.name}</strong>
+                      <span>{party.focus}</span>
+                    </div>
+                  </div>
+                  <div className="counterparty-meta">
+                    <b>{party.score}</b>
+                    <small>{party.fill}</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
+
+          <article className="desk-card doctrine-card">
+            <header>
+              <p>Desk doctrine</p>
+              <h2>Execution principles</h2>
+            </header>
+            <div className="doctrine-list">
+              {DOCTRINE.map((item) => (
+                <article key={item.title}>
+                  <item.icon size={15} />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.body}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <footer className="terminal-footer">
+          <div>
+            <p>OTC lanes need state, counterparties and settlement context. Otherwise it is just a table in a dark theme.</p>
+          </div>
+          <div className="terminal-links">
+            <span>Desk fits PIL blocks, MOTO inventory and bilateral testnet settlement.</span>
+            <a href="https://docs.opnet.org" target="_blank" rel="noreferrer">OPNet docs</a>
+          </div>
+        </footer>
       </main>
     </div>
   );
